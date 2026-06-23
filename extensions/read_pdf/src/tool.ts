@@ -17,7 +17,9 @@ const INPUT_SCHEMA: LocalToolDefinition['input_schema'] = {
     max_pages: { type: 'number', description: 'Optional safety cap for pages processed in this call.' },
     engine: {
       type: 'string',
-      description: `Optional sidecar engine hint: ${KNOWN_ENGINES.join(', ')}.`,
+      description:
+        `Optional sidecar engine hint: ${KNOWN_ENGINES.join(', ')}, ` +
+        `or any OCR backend registered in the sidecar.`,
     },
   },
   required: ['path'],

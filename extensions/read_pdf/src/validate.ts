@@ -1,7 +1,18 @@
 import type { ReadPdfRequest } from './types';
 
-/** Engines the public tool schema accepts. Routing/availability is decided by the sidecar. */
+/**
+ * Built-in engine names shown in the tool description. The sidecar owns the real
+ * routing and may expose additional registered backends, so validation accepts any
+ * safe engine token rather than a fixed enum — that lets new sidecar backends be
+ * used without changing this extension. See sidecar/engines/README.md.
+ */
 export const KNOWN_ENGINES = ['auto', 'text', 'ocr', 'mineru', 'noteeditor-lite'] as const;
+
+/**
+ * Engine tokens must be a safe identifier: the value is passed unquoted on the
+ * sidecar command line, so it must contain no shell metacharacters or whitespace.
+ */
+const ENGINE_PATTERN = /^[a-z][a-z0-9_-]*$/i;
 
 /** Matches "1", "1-3", "1-3,7", with optional surrounding whitespace. */
 const PAGES_PATTERN = /^\s*\d+(\s*-\s*\d+)?(\s*,\s*\d+(\s*-\s*\d+)?)*\s*$/;
@@ -45,10 +56,12 @@ export function validateInput(input: Record<string, unknown>): ValidationResult 
   }
 
   if (engine !== undefined) {
-    if (typeof engine !== 'string' || !(KNOWN_ENGINES as readonly string[]).includes(engine)) {
+    if (typeof engine !== 'string' || !ENGINE_PATTERN.test(engine)) {
       return {
         ok: false,
-        error: `invalid "engine": ${JSON.stringify(engine)}. Expected one of ${KNOWN_ENGINES.join(', ')}.`,
+        error:
+          `invalid "engine": ${JSON.stringify(engine)}. Use a backend name like ` +
+          `${KNOWN_ENGINES.join(', ')} (letters, digits, "_" or "-").`,
       };
     }
   }

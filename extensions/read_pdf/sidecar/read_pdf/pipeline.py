@@ -9,8 +9,9 @@ from .engines import text_layer
 from .models import PageResult, ReadResult
 
 ENGINE_LABEL = "read_pdf/pymupdf"
-# Engines accepted by the schema but not configured in this v1 build.
-UNCONFIGURED_ENGINES = {"mineru", "noteeditor-lite"}
+# Built-in engine modes handled directly here. Any other engine name is looked up
+# in the OCR backend registry (see engines/ocr.py and engines/README.md).
+BUILTIN_ENGINES = {"auto", "text", "ocr"}
 
 
 def parse_pages(spec: str | None, total: int) -> list[int]:
@@ -47,13 +48,34 @@ def read_pdf(
     backend: ocr_engine.OCRBackend | None = None,
 ) -> ReadResult:
     """Read a PDF into page-marked text following the JSON contract."""
-    if engine in UNCONFIGURED_ENGINES:
-        return ReadResult.failure(
-            path,
-            ENGINE_LABEL,
-            f'engine "{engine}" is not configured in this read_pdf build. '
-            f"Available engines: auto, text, ocr.",
-        )
+    engine_l = engine.strip().lower()
+    is_auto = engine_l == "auto"
+    is_text = engine_l == "text"
+
+    # Resolve which OCR backend (if any) this engine selects and whether every page
+    # should be OCR'd. `text` never OCRs unless force_ocr; `ocr` and any registered
+    # backend name OCR all pages; `auto` OCRs only sparse pages.
+    if engine_l in BUILTIN_ENGINES:
+        ocr_engine_name = ocr_engine.DEFAULT_OCR_ENGINE
+        ocr_all = engine_l == "ocr" or force_ocr
+    else:
+        ocr_engine_name = engine_l  # a specific registered backend
+        ocr_all = True
+
+    # Resolve the OCR backend up front (config error) so an unknown engine fails fast,
+    # independent of the file. Construction is cheap; models load lazily on first use.
+    may_ocr = ocr_all or is_auto
+    ocr_backend: ocr_engine.OCRBackend | None = None
+    if may_ocr:
+        ocr_backend = backend if backend is not None else ocr_engine.create_backend(ocr_engine_name)
+        if ocr_backend is None:
+            available = ", ".join(["auto", "text", "ocr", *ocr_engine.registered_engines()])
+            return ReadResult.failure(
+                path,
+                ENGINE_LABEL,
+                f'engine "{engine}" is not configured. Available engines: {available}. '
+                f"(mineru / noteeditor-lite are reserved for v2; register a backend to enable them.)",
+            )
 
     if not os.path.isfile(path):
         return ReadResult.failure(path, ENGINE_LABEL, f"file not found: {path}")
@@ -73,8 +95,7 @@ def read_pdf(
             )
             page_numbers = page_numbers[:max_pages]
 
-        ocr_backend = backend if backend is not None else ocr_engine.default_backend()
-        ocr_ready: bool | None = None  # lazily probed only when OCR is needed
+        ocr_ready: bool | None = None  # lazily probed only when OCR is actually needed
 
         page_results: list[PageResult] = []
         needs_ocr: list[int] = []
@@ -90,11 +111,14 @@ def read_pdf(
                 )
                 continue
 
-            want_ocr = engine == "ocr" or force_ocr or (
-                engine == "auto" and not text_layer.has_sufficient_text(text)
-            )
+            if is_text and not ocr_all:
+                want_ocr = False
+            elif ocr_all:
+                want_ocr = True
+            else:  # auto
+                want_ocr = not text_layer.has_sufficient_text(text)
 
-            if not want_ocr:
+            if not want_ocr or ocr_backend is None:
                 used_text = True
                 page_results.append(PageResult(page=page_number, source="text-layer", text=text))
                 continue
@@ -104,7 +128,7 @@ def read_pdf(
             if not ocr_ready:
                 needs_ocr.append(page_number)
                 # Under auto, keep whatever sparse text-layer text we have.
-                source = "text-layer" if engine == "auto" else "none"
+                source = "text-layer" if is_auto else "none"
                 page_results.append(
                     PageResult(
                         page=page_number,

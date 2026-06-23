@@ -58,11 +58,16 @@ describe('validateInput', () => {
     }
   });
 
-  it('rejects an unknown engine', () => {
-    const result = validateInput({ path: 'a.pdf', engine: 'magic' });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toMatch(/invalid "engine"/);
+  it('accepts an arbitrary safe engine name (forwarded to the sidecar registry)', () => {
+    // New sidecar backends can be used without changing this extension.
+    expect(validateInput({ path: 'a.pdf', engine: 'glm-ocr' }).ok).toBe(true);
+    expect(validateInput({ path: 'a.pdf', engine: 'mineru' }).ok).toBe(true);
+  });
+
+  it('rejects an engine token with unsafe shell characters', () => {
+    for (const engine of ['a b', 'rm -rf', 'x;y', '$(id)', '']) {
+      const result = validateInput({ path: 'a.pdf', engine });
+      expect(result.ok, `engine=${engine}`).toBe(false);
     }
   });
 

@@ -189,6 +189,17 @@ Lockfiles (`uv.lock`, `package-lock.json`) **are** committed for reproducibility
 - Windows/PowerShell note: bundled-binary invocation uses the `&` call operator (see
   `src/sidecar-client.ts: executableInvocation`).
 
+## 10b. OCR backend extensibility (v0.1.1)
+
+OCR backends are pluggable via a registry in `sidecar/read_pdf/engines/ocr.py`
+(`register_backend` / `create_backend` / `registered_engines`). Adding a backend =
+implement the `OCRBackend` protocol + one `register_backend(...)` call + an import line
+in `engines/__init__.py`. The `engine` argument is forwarded verbatim from the tool to
+the sidecar, so new backends are selectable with `engine=<name>` without changing the TS
+layer (TS validation now accepts any safe engine token, not a fixed enum). Unknown engines
+return an actionable error listing available ones. Full guide:
+`sidecar/read_pdf/engines/README.md`.
+
 ## 11. Out of Scope (v1)
 
 PPTX assembly/font/background/fidelity work, VLM/MinerU/cloud OCR backends, overriding the

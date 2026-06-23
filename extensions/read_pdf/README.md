@@ -107,6 +107,13 @@ Tool parameters:
 The extension resolves transport in this order: `READ_PDF_ENDPOINT` → bundled binary →
 `uv` (connected) → actionable setup guidance.
 
+### Adding a stronger OCR backend
+
+OCR backends are pluggable. You can add a new one (local VLM, cloud OCR, etc.) and select it
+live with `engine=<name>` **without changing this extension** — the `engine` value is forwarded
+to the sidecar's backend registry. See the step-by-step guide:
+[sidecar/read_pdf/engines/README.md](sidecar/read_pdf/engines/README.md).
+
 ### Troubleshooting
 
 - **"sidecar is not available"**: none of the transports were found. On a connected machine,
