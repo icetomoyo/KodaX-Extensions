@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "file": "C:/docs/scanned.pdf",
+  "page_count": 3,
+  "engine": "read_pdf/pymupdf",
+  "selected_backend": "text-layer (ocr unavailable)",
+  "mode": "text",
+  "pages": [
+    { "page": 1, "source": "text-layer", "text": "", "warnings": ["OCR requested but no OCR backend is available."] },
+    { "page": 2, "source": "text-layer", "text": "", "warnings": ["OCR requested but no OCR backend is available."] }
+  ],
+  "needs_ocr": [1, 2],
+  "warnings": []
+}

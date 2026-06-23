@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "file": "C:/docs/complex.pdf",
+  "page_count": 2,
+  "engine": "read_pdf/mineru",
+  "selected_backend": "mineru",
+  "mode": "mixed",
+  "pages": [
+    { "page": 1, "source": "mineru", "text": "# Title\n\nParagraph with a formula $E=mc^2$.", "warnings": [] },
+    { "page": 2, "source": "mineru", "text": "| a | b |\n|---|---|\n| 1 | 2 |", "warnings": ["table reconstructed heuristically"] }
+  ],
+  "needs_ocr": [],
+  "warnings": ["mineru backend is experimental"]
+}

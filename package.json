@@ -1,0 +1,22 @@
+{
+  "name": "kodax-extensions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KodaX ecosystem extensions monorepo.",
+  "workspaces": [
+    "extensions/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

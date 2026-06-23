@@ -1,0 +1,24 @@
+[project]
+name = "read_pdf"
+version = "0.1.0"
+description = "read_pdf sidecar: extract PDF pages as model-friendly text, with optional RapidOCR."
+requires-python = ">=3.10"
+# RapidOCR is included by default so OCR works out of the box. It is pure-pip,
+# CPU via onnxruntime, no large model, strong CJK support. The import is still
+# lazy in code, so a text-layer-only PDF never loads it and a build that omits it
+# still extracts text (OCR pages then return a needs_ocr warning).
+dependencies = [
+    "pymupdf>=1.25.0",
+    "rapidocr-onnxruntime>=1.3.0",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+read_pdf = "read_pdf.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["read_pdf"]

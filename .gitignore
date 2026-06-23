@@ -1,0 +1,32 @@
+# Node / TS
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Build artifacts (produced on a connected build machine, shipped as release assets)
+extensions/*/dist/
+extensions/*/sidecar/bin/
+extensions/*/sidecar/build/
+extensions/*/sidecar/*.spec
+offline-bundle*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.uv/
+*.egg-info/
+
+# OCR models (downloaded/bundled, never committed)
+*.onnx
+models/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# KodaX runtime scratch state (created when dogfooding via kodax)
+.agent/

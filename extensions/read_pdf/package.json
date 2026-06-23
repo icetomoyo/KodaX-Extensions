@@ -1,0 +1,11 @@
+{
+  "name": "@kodax-extensions/read_pdf",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KodaX extension: read PDF pages as model-friendly text, with optional sidecar OCR.",
+  "main": "extension.ts",
+  "scripts": {
+    "build": "node ../../scripts/build-extension.mjs"
+  }
+}

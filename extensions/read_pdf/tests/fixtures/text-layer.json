@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "file": "C:/docs/sample.pdf",
+  "page_count": 8,
+  "engine": "read_pdf/pymupdf",
+  "selected_backend": "text-layer",
+  "mode": "text",
+  "pages": [
+    { "page": 1, "source": "text-layer", "text": "Hello from page one.", "warnings": [] },
+    { "page": 2, "source": "text-layer", "text": "Second page content.", "warnings": [] }
+  ],
+  "needs_ocr": [],
+  "warnings": []
+}

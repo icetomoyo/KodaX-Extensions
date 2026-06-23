@@ -1,0 +1,9 @@
+# Normalize line endings to LF in the repo for cross-platform consistency.
+* text=auto eol=lf
+
+# Binary/asset types should never be normalized.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.onnx binary
+*.zip binary
