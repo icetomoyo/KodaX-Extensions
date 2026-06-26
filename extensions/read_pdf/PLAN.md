@@ -77,7 +77,8 @@ extensions/read_pdf/
         text_layer.py       # PyMuPDF get_text
         ocr.py              # RapidOCR backend behind a pluggable OCRBackend protocol
     BUILD_OFFLINE.md        # how to build & ship the air-gapped bundle
-  dist/                     # build artifacts (gitignored): extension.mjs, sidecar/bin/...
+  extension.mjs             # built entrypoint at root (gitignored; KodaX loads this on a binary)
+  dist/                     # other build artifacts (gitignored): offline staging, etc.
   PLAN.md / README.md / HANDOFF.md
 ```
 
@@ -159,7 +160,7 @@ Warnings:
 
 | Committed (text, reproducible) | Ignored (build artifacts / large / platform) |
 |--------------------------------|----------------------------------------------|
-| `extension.ts`, `src/*.ts`, `package.json`, `tsconfig.json` | `dist/extension.mjs` (esbuild output) |
+| `extension.ts`, `src/*.ts`, `package.json`, `tsconfig.json` | `extension.mjs` (esbuild output, at extension root) |
 | sidecar `*.py`, `pyproject.toml`, `uv.lock` | `dist/sidecar/bin/` (PyInstaller onedir + interpreter + models) |
 | `scripts/*`, `BUILD_OFFLINE.md`, bundle manifest + checksums | offline `.zip`, `node_modules/`, `.venv/`, `__pycache__/`, `*.onnx` |
 | tests + fixtures | uv cache |

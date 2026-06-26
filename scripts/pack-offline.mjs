@@ -1,7 +1,7 @@
 // Assemble an air-gapped offline bundle of the read_pdf extension.
 //
 // Prerequisites (run on a CONNECTED machine, in order):
-//   1. node scripts/build-extension.mjs   -> extensions/read_pdf/dist/extension.mjs
+//   1. node scripts/build-extension.mjs   -> extensions/read_pdf/extension.mjs
 //   2. node scripts/build-sidecar.mjs      -> extensions/read_pdf/sidecar/bin/read_pdf/
 //
 // This script stages those artifacts into a folder ready to copy onto the
@@ -20,7 +20,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const extDir = join(repoRoot, 'extensions', 'read_pdf');
 const stage = join(extDir, 'dist', 'offline', 'read_pdf');
 
-const extensionMjs = join(extDir, 'dist', 'extension.mjs');
+const extensionMjs = join(extDir, 'extension.mjs');
 const sidecarBin = join(extDir, 'sidecar', 'bin', 'read_pdf');
 
 for (const [label, path] of [

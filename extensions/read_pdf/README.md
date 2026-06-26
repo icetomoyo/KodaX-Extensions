@@ -41,13 +41,24 @@ Requires KodaX plus [uv](https://docs.astral.sh/uv/). uv provisions the Python s
 automatically on first use (cached afterward); no manual `pip install`.
 
 1. Install uv once: `winget install astral-sh.uv` (Windows) or see the uv docs.
-2. Point KodaX at the extension folder:
+2. Build the loadable entrypoint once (produces `extension.mjs` at the extension root):
+   ```bash
+   npm install && npm run build   # or directly: node scripts/build-extension.mjs
+   ```
+   This step matters because a **compiled** `kodax` binary cannot load `extension.ts`
+   (it has no `tsx` at runtime). The built `extension.mjs` sits next to `extension.ts`
+   at the extension root, and KodaX's directory resolver picks it first.
+3. Point KodaX at the extension folder:
    ```bash
    kodax --extension /path/to/extensions/read_pdf "Read pages 1-2 of C:/tmp/sample.pdf"
    ```
    Or install it for auto-discovery by copying/symlinking the folder to `~/.kodax/extensions/read_pdf`.
-3. First call downloads the Python dependencies; later calls are fast. OCR models download
+4. First call downloads the Python dependencies; later calls are fast. OCR models download
    on first OCR use only (text-layer PDFs never download them).
+
+> Developing the extension itself? Point KodaX straight at the source file —
+> `kodax --extension /path/to/extensions/read_pdf/extension.ts` — so a `tsx`-based KodaX
+> loads your live `.ts` edits without a rebuild. (This path needs a non-compiled KodaX.)
 
 ### B. Air-gapped machine (no Node, no Python, no internet)
 

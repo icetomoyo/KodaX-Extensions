@@ -1,4 +1,4 @@
-// Bundle the read_pdf extension into a self-contained dist/extension.mjs.
+// Bundle the read_pdf extension into a self-contained extension.mjs at the extension root.
 //
 // Why: KodaX ships as a `bun build --compile` binary that cannot load `.ts`
 // extensions (no `tsx` at runtime). A single bundled `.mjs` using only Node/Bun
@@ -14,7 +14,10 @@ const extDir = join(repoRoot, 'extensions', 'read_pdf');
 
 await build({
   entryPoints: [join(extDir, 'extension.ts')],
-  outfile: join(extDir, 'dist', 'extension.mjs'),
+  // Emit to the extension ROOT so KodaX's directory resolver picks extension.mjs
+  // (it ranks above extension.ts and is the only form a compiled binary can load),
+  // and so import.meta.url resolves extDir to the extension root where sidecar/ lives.
+  outfile: join(extDir, 'extension.mjs'),
   bundle: true,
   platform: 'node',
   format: 'esm',
@@ -27,4 +30,4 @@ await build({
   logLevel: 'info',
 });
 
-console.log('Built extensions/read_pdf/dist/extension.mjs');
+console.log('Built extensions/read_pdf/extension.mjs');

@@ -102,6 +102,22 @@ describe('runSidecar resolution ladder', () => {
     expect(command.startsWith("& '")).toBe(true);
   });
 
+  it('resolves the sidecar from the parent dir when loaded from dist/ (extDir=.../dist)', async () => {
+    const exec = vi.fn(async (_cmd: string) => ({ exitCode: 0, stdout: OK_STDOUT, stderr: '' }));
+    // sidecar lives at /ext/read_pdf/sidecar, but extension.mjs was loaded from /ext/read_pdf/dist
+    const deps = makeDeps({
+      exec,
+      extDir: '/ext/read_pdf/dist',
+      // binary exists only under the parent's sidecar dir, not under dist/sidecar
+      exists: (p) => p.includes('sidecar') && p.includes('bin') && !p.includes('dist'),
+    });
+    const outcome = await runSidecar(deps, { path: 'a.pdf' });
+    expect(outcome.kind).toBe('ok');
+    const command = exec.mock.calls[0]?.[0] as string;
+    expect(command).not.toContain('dist');
+    expect(command).toContain('sidecar');
+  });
+
   it('falls back to uv when no binary but uv and the project are present', async () => {
     const exec = vi.fn(async (cmd: string) => {
       if (cmd.startsWith('uv --version')) return { exitCode: 0, stdout: 'uv 0.5.0', stderr: '' };

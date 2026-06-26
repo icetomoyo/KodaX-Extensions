@@ -5,6 +5,8 @@ dist/
 
 # Build artifacts (produced on a connected build machine, shipped as release assets)
 extensions/*/dist/
+extensions/*/extension.mjs
+extensions/*/extension.mjs.map
 extensions/*/sidecar/bin/
 extensions/*/sidecar/build/
 extensions/*/sidecar/*.spec

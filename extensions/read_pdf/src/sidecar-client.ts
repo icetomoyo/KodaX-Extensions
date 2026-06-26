@@ -50,13 +50,51 @@ function executableInvocation(executablePath: string, args: string, platform: No
   return platform === 'win32' ? `& ${quoted} ${args}` : `${quoted} ${args}`;
 }
 
+function binNameFor(platform: NodeJS.Platform): string {
+  return platform === 'win32' ? 'read_pdf.exe' : 'read_pdf';
+}
+
+/**
+ * Candidate sidecar directories relative to the extension entrypoint. Handles
+ * `extension.mjs` at the extension root (`<extDir>/sidecar`) as well as a build
+ * artifact under `dist/` (`<extDir>/../sidecar`), so the sidecar is found either way.
+ */
+export function sidecarDirCandidates(extDir: string): string[] {
+  return [join(extDir, 'sidecar'), join(extDir, '..', 'sidecar')];
+}
+
+/** Primary expected binary path (first candidate) — used in setup guidance. */
 export function defaultBinPath(extDir: string, platform: NodeJS.Platform = process.platform): string {
-  const name = platform === 'win32' ? 'read_pdf.exe' : 'read_pdf';
-  return join(extDir, 'sidecar', 'bin', 'read_pdf', name);
+  return join(extDir, 'sidecar', 'bin', 'read_pdf', binNameFor(platform));
 }
 
 export function defaultSidecarDir(extDir: string): string {
   return join(extDir, 'sidecar');
+}
+
+/** First existing bundled-binary path across candidate dirs, or null. */
+function resolveBinPath(deps: SidecarDeps): string | null {
+  const override = deps.env['READ_PDF_BIN'];
+  if (override) {
+    return deps.exists(override) ? override : null;
+  }
+  for (const dir of sidecarDirCandidates(deps.extDir)) {
+    const candidate = join(dir, 'bin', 'read_pdf', binNameFor(deps.platform));
+    if (deps.exists(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+/** First candidate sidecar dir that holds a uv project (pyproject.toml), or null. */
+function resolveProjectDir(deps: SidecarDeps): string | null {
+  for (const dir of sidecarDirCandidates(deps.extDir)) {
+    if (deps.exists(join(dir, 'pyproject.toml'))) {
+      return dir;
+    }
+  }
+  return null;
 }
 
 /**
@@ -177,15 +215,14 @@ export async function runSidecar(deps: SidecarDeps, request: ReadPdfRequest): Pr
 
   const args = buildReadArgs(request, deps.platform);
 
-  const binPath = deps.env['READ_PDF_BIN'] ?? defaultBinPath(deps.extDir, deps.platform);
-  if (deps.exists(binPath)) {
+  const binPath = resolveBinPath(deps);
+  if (binPath) {
     return runCliCommand(deps, executableInvocation(binPath, args, deps.platform));
   }
 
-  const sidecarDir = defaultSidecarDir(deps.extDir);
-  const hasProject = deps.exists(join(sidecarDir, 'pyproject.toml'));
-  if (hasProject && (await uvAvailable(deps))) {
-    return runCliCommand(deps, `uv run --project ${quoteArg(sidecarDir, deps.platform)} read_pdf ${args}`);
+  const projectDir = resolveProjectDir(deps);
+  if (projectDir && (await uvAvailable(deps))) {
+    return runCliCommand(deps, `uv run --project ${quoteArg(projectDir, deps.platform)} read_pdf ${args}`);
   }
 
   return { kind: 'unavailable', message: setupGuidance(deps) };
