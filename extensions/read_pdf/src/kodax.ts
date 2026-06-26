@@ -42,6 +42,11 @@ export interface WebhookResult {
   readonly body?: string;
 }
 
+export interface ExtensionProviderBeforeHookContext {
+  readonly systemPrompt: string;
+  replaceSystemPrompt: (systemPrompt: string) => void;
+}
+
 export interface KodaXToolInputSchema {
   readonly type: 'object';
   readonly properties: Record<string, unknown>;
@@ -68,6 +73,10 @@ export interface ExtensionLogger {
 
 export interface KodaXExtensionAPI {
   registerTool: (definition: LocalToolDefinition) => () => void;
+  hook?: (
+    hook: 'provider:before',
+    handler: (context: ExtensionProviderBeforeHookContext) => Promise<void> | void,
+  ) => () => void;
   logger: ExtensionLogger;
   config: Readonly<Record<string, unknown>>;
   exec: (command: string, options?: ExecOptions) => Promise<ExecResult>;

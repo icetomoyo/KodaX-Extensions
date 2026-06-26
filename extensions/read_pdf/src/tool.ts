@@ -4,17 +4,29 @@ import { createSidecarDeps, runSidecar, type SidecarDeps } from './sidecar-clien
 import { KNOWN_ENGINES, validateInput } from './validate';
 
 const DESCRIPTION =
-  'Read PDF pages as model-friendly text. Extracts the embedded text layer first; ' +
-  'OCR/heavy parsing is used only when configured by the read_pdf sidecar. ' +
-  'Returns page-marked text plus engine, backend, and warning metadata.';
+  'Use this tool for PDF files (.pdf): read, summarize, extract, translate, search, ' +
+  'or answer questions about PDF content. Prefer read_pdf over the built-in read tool ' +
+  'for PDF paths; read handles text/image files, while read_pdf extracts PDF text and ' +
+  'can OCR scanned/image-only pages when the sidecar has OCR available. It extracts the ' +
+  'embedded text layer first, then uses OCR/heavy parsing only when needed or requested. ' +
+  'Returns compact page-marked text plus engine, backend, and warning metadata.';
 
 const INPUT_SCHEMA: LocalToolDefinition['input_schema'] = {
   type: 'object',
   properties: {
-    path: { type: 'string', description: 'PDF file path to read.' },
-    pages: { type: 'string', description: 'Optional 1-based page range, e.g. "1-3,7".' },
-    force_ocr: { type: 'boolean', description: 'When true, OCR pages even if a text layer exists.' },
-    max_pages: { type: 'number', description: 'Optional safety cap for pages processed in this call.' },
+    path: { type: 'string', description: 'Absolute or working-directory-relative PDF file path.' },
+    pages: {
+      type: 'string',
+      description: 'Optional 1-based page range, e.g. "1-3,7". Omit for the whole PDF.',
+    },
+    force_ocr: {
+      type: 'boolean',
+      description: 'Set true only when the user asks for OCR or the text layer is insufficient.',
+    },
+    max_pages: {
+      type: 'number',
+      description: 'Optional safety cap for large PDFs; use a page range when the user asks for specific pages.',
+    },
     engine: {
       type: 'string',
       description:

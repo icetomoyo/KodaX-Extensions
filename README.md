@@ -45,6 +45,20 @@ node scripts/pack-offline.mjs    # stage extension.mjs + sidecar binary + checks
 See [extensions/read_pdf/sidecar/BUILD_OFFLINE.md](extensions/read_pdf/sidecar/BUILD_OFFLINE.md)
 for the full air-gapped build-and-ship procedure.
 
+## Real LLM Auto-Use Eval
+
+`read_pdf` should be a model-selected tool, not something users normally have to name. To smoke-test that behavior with a real KodaX run:
+
+```bash
+npm run eval:read-pdf-auto-use
+```
+
+The eval generates a tiny PDF with a hidden sentinel phrase, runs KodaX with the `read_pdf`
+extension loaded, and gives the model a prompt that mentions only the PDF path, not the tool
+name. It passes only when KodaX returns the sentinel through a PDF tool result without first
+falling back to the built-in `read` PDF warning. Raw output is written under the OS temp
+directory at `kodax-eval-dumps/read-pdf-auto-use/`.
+
 ## KodaX Extension Mechanism
 
 KodaX currently has an `extension` mechanism rather than a separate marketplace plugin runtime. An extension is a local JavaScript or TypeScript module that KodaX loads at startup. The module exports either a default activation function or a named `activate(api)` function.

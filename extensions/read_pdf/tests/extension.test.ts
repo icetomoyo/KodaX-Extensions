@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import activate from '../extension';
+import { activateReadPdf } from '../src/activate';
 import type { KodaXExtensionAPI, LocalToolDefinition } from '../src/kodax';
 import { createReadPdfTool } from '../src/tool';
 import type { SidecarDeps } from '../src/sidecar-client';
@@ -8,12 +8,26 @@ import type { SidecarDeps } from '../src/sidecar-client';
 import textLayer from './fixtures/text-layer.json';
 
 const OK_STDOUT = JSON.stringify(textLayer);
+type ProviderHook = NonNullable<KodaXExtensionAPI['hook']> extends (
+  hook: 'provider:before',
+  handler: infer THandler,
+) => () => void ? THandler : never;
 
-function makeApi(): { api: KodaXExtensionAPI; registered: LocalToolDefinition[] } {
+function makeApi(): {
+  api: KodaXExtensionAPI;
+  registered: LocalToolDefinition[];
+  providerHooks: ProviderHook[];
+} {
   const registered: LocalToolDefinition[] = [];
+  const providerHooks: ProviderHook[] = [];
   const api: KodaXExtensionAPI = {
     registerTool: (def) => {
       registered.push(def);
+      return () => {};
+    },
+    hook: (hook, handler) => {
+      expect(hook).toBe('provider:before');
+      providerHooks.push(handler);
       return () => {};
     },
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -21,7 +35,7 @@ function makeApi(): { api: KodaXExtensionAPI; registered: LocalToolDefinition[] 
     exec: vi.fn(async () => ({ exitCode: 1, stdout: '', stderr: '' })),
     webhook: vi.fn(async () => ({ ok: false, status: 500 })),
   };
-  return { api, registered };
+  return { api, registered, providerHooks };
 }
 
 function depsWith(overrides: Partial<SidecarDeps>): SidecarDeps {
@@ -39,15 +53,35 @@ function depsWith(overrides: Partial<SidecarDeps>): SidecarDeps {
 describe('activate', () => {
   it('registers a read_pdf tool with the expected metadata', () => {
     const { api, registered } = makeApi();
-    activate(api);
+    activateReadPdf(api, '/ext/read_pdf');
     expect(registered).toHaveLength(1);
     const tool = registered[0]!;
     expect(tool.name).toBe('read_pdf');
     expect(tool.sideEffect).toBe('readonly');
     expect(tool.planModeAllowed).toBe(true);
+    expect(tool.description).toContain('Use this tool for PDF files');
+    expect(tool.description).toContain('Prefer read_pdf over the built-in read tool');
     expect(tool.input_schema.required).toContain('path');
     // read-only tool skips the classifier
     expect(tool.toClassifierInput({})).toBe('');
+  });
+
+  it('adds a provider prompt hint for automatic PDF routing', async () => {
+    const { api, providerHooks } = makeApi();
+    const dispose = activateReadPdf(api, '/ext/read_pdf');
+
+    expect(providerHooks).toHaveLength(1);
+    let systemPrompt = 'base prompt';
+    await providerHooks[0]!({
+      systemPrompt,
+      replaceSystemPrompt: (next) => {
+        systemPrompt = next;
+      },
+    });
+
+    expect(systemPrompt).toContain('read_pdf Extension Routing');
+    expect(systemPrompt).toContain('do not search the workspace with `glob` first');
+    dispose();
   });
 });
 
