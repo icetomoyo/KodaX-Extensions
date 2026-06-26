@@ -195,7 +195,7 @@ The product decision is not MinerU vs NoteEditor. It is a router: let the sideca
 
 KodaX's current mechanism is an extension runtime, not a marketplace plugin runtime. A KodaX extension is a local JavaScript or TypeScript module exporting a default activation function or named `activate(api)` function.
 
-KodaX can now load either a module file or a package directory. That changes the recommended `read_pdf` shape: the extension folder should expose a root entrypoint such as `extension.ts`, and that entrypoint can import implementation modules from `src/`.
+KodaX can now load either a module file or a package directory. That changes the recommended `read_pdf` shape: the extension folder exposes a root entrypoint — `extension.ts` as the source you develop, built to `extension.mjs` (the form KodaX actually loads) — and that entrypoint imports implementation modules from `src/`.
 
 Current loading paths:
 
@@ -388,17 +388,24 @@ This folder is documentation-only for now. A future implementation should grow i
 extensions/read_pdf/
   README.md
   HANDOFF.md
-  extension.ts
+  extension.ts            # source entrypoint (develop here)
+  extension.mjs           # built entrypoint KodaX loads (esbuild output; gitignored)
   src/
     tool.ts
     sidecar-client.ts
     format-result.ts
+  sidecar/                # Python sidecar (resolved relative to the entrypoint)
   tests/
     extension.test.ts
   package.json
 ```
 
-`extension.ts` is the KodaX entrypoint. Keep it small and import the real implementation from `src/`. This lets all current loading paths work:
+`extension.ts` is the **source** entrypoint — keep it small and import the real
+implementation from `src/`. `extension.mjs` (built by `scripts/build-extension.mjs` to the
+extension root) is the **loaded** entrypoint: KodaX's directory resolver picks it over
+`extension.ts`, and it is the only form a compiled KodaX binary can load. Building to the
+root also keeps `import.meta.url`/`extDir` pointing at the extension root, where `sidecar/`
+lives. With the built `extension.mjs` present, all loading paths work:
 
 ```bash
 kodax --extension C:/Works/GitWorks/KodaX-author/KodaX-Extensions/extensions/read_pdf "Read C:/tmp/sample.pdf"
